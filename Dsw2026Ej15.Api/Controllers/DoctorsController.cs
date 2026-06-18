@@ -1,7 +1,9 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Dsw2026Ej15.Data;
+﻿using System;
+using System.Linq;
+using Microsoft.AspNetCore.Mvc;
 using Dsw2026Ej15.Domain;
-using Dsw2026Ej15.Api.DTOs;
+using Dsw2026Ej15.Data;
+using Dsw2026Ej15.Api.DTOs; 
 
 namespace Dsw2026Ej15.Api.Controllers;
 
@@ -16,55 +18,60 @@ public class DoctorsController : ControllerBase
         _persistence = persistence;
     }
 
-    // POST api/doctors
+   
     [HttpPost]
-    public IActionResult CreateDoctor([FromBody] CreateDoctorDto dto)
+    public IActionResult CreateDoctor([FromBody] CreateDoctorDto request)
     {
-        if (string.IsNullOrWhiteSpace(dto.Name))
-            throw new ValidationException("El nombre es requerido.");
+       
+        if (string.IsNullOrWhiteSpace(request.Name))
+            throw new ValidationException("El campo Name es requerido.");
 
-        if (string.IsNullOrWhiteSpace(dto.LicenseNumber))
-            throw new ValidationException("El número de licencia es requerido.");
+        if (string.IsNullOrWhiteSpace(request.LicenseNumber))
+            throw new ValidationException("El campo License Number es requerido.");
 
-        var speciality = _persistence.Specialities.FirstOrDefault(s => s.Id == dto.SpecialityId);
+        var speciality = _persistence.GetSpecialityById(request.SpecialityId);
         if (speciality == null)
             throw new ValidationException("La especialidad indicada no existe.");
 
         var newDoctor = new Doctor
         {
-            Name = dto.Name,
-            LicenseNumber = dto.LicenseNumber,
-            Speciality = speciality,
-            IsActive = true
+            Name = request.Name,
+            LicenseNumber = request.LicenseNumber,
+            IsActive = true,
+            Speciality = speciality
         };
 
         _persistence.AddDoctor(newDoctor);
 
-        return Created($"/api/doctors/{newDoctor.Id}", newDoctor);
+        return StatusCode(201, new { Message = "Médico creado exitosamente", Id = newDoctor.Id });
     }
 
-    // GET api/doctors
+   
     [HttpGet]
     public IActionResult GetActiveDoctors()
     {
-        var activeDoctors = _persistence.Doctors
-            .Where(d => d.IsActive)
-            .ToList();
+        var doctors = _persistence.GetActiveDoctors().Select(d => new DoctorResponseDto
+        {
+            Id = d.Id,
+            Name = d.Name,
+            LicenseNumber = d.LicenseNumber,
+            SpecialityName = d.Speciality.Name 
+        }).ToList();
 
-        return Ok(activeDoctors);
+        return Ok(doctors);
     }
 
-    // GET api/doctors/{id}
+   
     [HttpGet("{id:guid}")]
     public IActionResult GetDoctorById(Guid id)
     {
-        var doctor = _persistence.Doctors.FirstOrDefault(d => d.Id == id && d.IsActive);
-
+        var doctor = _persistence.GetActiveDoctorById(id);
         if (doctor == null)
-            return NotFound(new { message = "Médico no encontrado o inactivo." });
+            return NotFound(new { Error = "Médico no encontrado o se encuentra inactivo." });
 
         var response = new DoctorResponseDto
         {
+            Id = doctor.Id,
             Name = doctor.Name,
             LicenseNumber = doctor.LicenseNumber,
             SpecialityName = doctor.Speciality.Name
@@ -73,17 +80,17 @@ public class DoctorsController : ControllerBase
         return Ok(response);
     }
 
-    // DELETE api/doctors/{id}
+   
     [HttpDelete("{id:guid}")]
     public IActionResult DeleteDoctor(Guid id)
     {
-        var doctor = _persistence.Doctors.FirstOrDefault(d => d.Id == id && d.IsActive);
-
+        var doctor = _persistence.GetActiveDoctorById(id);
         if (doctor == null)
-            return NotFound(new { message = "Médico no encontrado o inactivo." });
+            return NotFound(new { Error = "Médico no encontrado o ya se encuentra inactivo." });
 
-        doctor.IsActive = false;
+        _persistence.DeactivateDoctor(id);
 
+      
         return NoContent();
     }
 }

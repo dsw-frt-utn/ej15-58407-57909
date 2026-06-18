@@ -1,6 +1,13 @@
 ﻿using System.Text.Json;
 using Dsw2026Ej15.Domain;
 
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text.Json;
+using Dsw2026Ej15.Domain;
+
 namespace Dsw2026Ej15.Data;
 
 public class PersistenceInMemory : IPersistence
@@ -16,6 +23,30 @@ public class PersistenceInMemory : IPersistence
     public void AddDoctor(Doctor doctor)
     {
         Doctors.Add(doctor);
+    }
+
+    public IEnumerable<Doctor> GetActiveDoctors()
+    {
+        return Doctors.Where(d => d.IsActive).ToList();
+    }
+
+    public Doctor? GetActiveDoctorById(Guid id)
+    {
+        return Doctors.FirstOrDefault(d => d.Id == id && d.IsActive);
+    }
+
+    public void DeactivateDoctor(Guid id)
+    {
+        var doctor = Doctors.FirstOrDefault(d => d.Id == id && d.IsActive);
+        if (doctor != null)
+        {
+            doctor.IsActive = false;
+        }
+    }
+
+    public Speciality? GetSpecialityById(Guid id)
+    {
+        return Specialities.FirstOrDefault(s => s.Id == id);
     }
 
     private void LoadSpecialities()

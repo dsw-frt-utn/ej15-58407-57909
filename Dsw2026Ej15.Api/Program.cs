@@ -14,25 +14,24 @@ builder.Services.AddHealthChecks();
 // Registrar la persistencia como Singleton
 builder.Services.AddSingleton<IPersistence, PersistenceInMemory>();
 
-var app = builder.ApplicationServices.CreateBuilder();
-
-var appBuild = builder.Build();
+// CONSTRUIR LA APLICACIÓN
+var app = builder.Build();
 
 // Configurar el Middleware para manejo de excepciones
-appBuild.UseMiddleware<ExceptionMiddleware>();
+app.UseMiddleware<ExceptionMiddleware>();
 
 // Configurar el pipeline de solicitudes HTTP
-if (appBuild.Environment.IsDevelopment())
+if (app.Environment.IsDevelopment())
 {
-    appBuild.UseSwagger();
-    appBuild.UseSwaggerUI();
+    app.UseSwagger();
+    app.UseSwaggerUI();
 }
 
-appBuild.UseHttpsRedirection();
-appBuild.UseAuthorization();
-appBuild.MapControllers();
+app.UseHttpsRedirection();
+app.UseAuthorization();
+app.MapControllers();
 
 // Mapear el endpoint de Health Check
-appBuild.MapHealthChecks("/health-check");
+app.MapHealthChecks("/health-check");
 
-appBuild.Run();
+app.Run();
