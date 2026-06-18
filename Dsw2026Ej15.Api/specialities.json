@@ -1,0 +1,17 @@
+[
+  {
+    "Id": "a1b2c3d4-e5f6-4a5b-8c9d-0123456789ab",
+    "Name": "Cardiología",
+    "Description": "Especialidad dedicada al estudio, diagnóstico y tratamiento de las enfermedades del corazón y del sistema circulatorio."
+  },
+  {
+    "Id": "11223344-5566-7788-9900-aabbccddeeff",
+    "Name": "Pediatría",
+    "Description": "Rama de la medicina que involucra la atención médica de bebés, niños y adolescentes."
+  },
+  {
+    "Id": "ffeeddcc-bbaa-9988-7766-554433221100",
+    "Name": "Neurología",
+    "Description": "Especialidad que trata los trastornos del sistema nervioso."
+  }
+]
