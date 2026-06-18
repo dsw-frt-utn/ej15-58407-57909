@@ -1,41 +1,38 @@
+using Dsw2026Ej15.Api.Middlewares;
+using Dsw2026Ej15.Data;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
+// Agregar servicios
+builder.Services.AddControllers();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
 
-var app = builder.Build();
+// Agregar Health Checks
+builder.Services.AddHealthChecks();
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+// Registrar la persistencia como Singleton
+builder.Services.AddSingleton<IPersistence, PersistenceInMemory>();
+
+var app = builder.ApplicationServices.CreateBuilder();
+
+var appBuild = builder.Build();
+
+// Configurar el Middleware para manejo de excepciones
+appBuild.UseMiddleware<ExceptionMiddleware>();
+
+// Configurar el pipeline de solicitudes HTTP
+if (appBuild.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
+    appBuild.UseSwagger();
+    appBuild.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+appBuild.UseHttpsRedirection();
+appBuild.UseAuthorization();
+appBuild.MapControllers();
 
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
+// Mapear el endpoint de Health Check
+appBuild.MapHealthChecks("/health-check");
 
-app.MapGet("/weatherforecast", () =>
-{
-    var forecast =  Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast");
-
-app.Run();
-
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
+appBuild.Run();
